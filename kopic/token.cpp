@@ -56,6 +56,8 @@ Token TokenReader::next() {
         return {TokenType::CloseBrace, "}"};
     case ';':
         return {TokenType::Semicolon, ";"};
+    case '+':
+        return {TokenType::Plus, "+"};
     default:
         std::cerr << "Unrecognized token" << std::endl;
         return {TokenType::Invalid, ""};
@@ -72,6 +74,7 @@ bool TokenReader::expectNext(TokenType expectedType, Token *result) {
         "{",
         "}",
         ";",
+        "+",
         "public",
         "int",
         "return",

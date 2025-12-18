@@ -13,6 +13,7 @@ enum class TokenType {
     OpenBrace,
     CloseBrace,
     Semicolon,
+    Plus,
 
     // Keywords
     Public,

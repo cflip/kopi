@@ -32,22 +32,47 @@ class ASTNode {
     }
 };
 
-class ExprASTNode : public ASTNode {
+class ExprASTNode : public ASTNode {};
+
+class NumericExprASTNode : public ExprASTNode {
   public:
-    explicit ExprASTNode(Token number) : number(number) {}
+    explicit NumericExprASTNode(Token number) : number(number) {}
 
     llvm::Value *emit() const override {
-        long value = std::stoi(number.contents);
+        int64_t value = std::stoi(number.contents);
         return llvm::ConstantInt::get(*context, llvm::APInt(32, value, true));
     }
 
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
-        std::cout << "<expr> -> " << number.contents << std::endl;
+        std::cout << "<expr_num> " << number.contents << std::endl;
     }
 
   private:
     Token number;
+};
+
+class BinaryOpExprASTNode : public ExprASTNode {
+  public:
+    BinaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> l,
+                        std::unique_ptr<ExprASTNode> r)
+        : op(op), left(std::move(l)), right(std::move(r)) {}
+
+    llvm::Value *emit() const override {
+        return builder->CreateAdd(left->emit(), right->emit());
+    }
+
+    void dbgprint(int indent) const override {
+        ASTNode::dbgprint(indent);
+        std::cout << "<expr_op> " << op.contents << '\n';
+        left->dbgprint(indent + 1);
+        right->dbgprint(indent + 1);
+    }
+
+  private:
+    Token op;
+    std::unique_ptr<ExprASTNode> left;
+    std::unique_ptr<ExprASTNode> right;
 };
 
 class StmtASTNode : public ASTNode {};
@@ -63,7 +88,7 @@ class ReturnStmtASTNode : public StmtASTNode {
 
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
-        std::cout << "<return>" << '\n';
+        std::cout << "<stmt_ret>" << '\n';
         expr->dbgprint(indent + 1);
     }
 
@@ -85,7 +110,7 @@ class CompoundStmtASTNode : public StmtASTNode {
 
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
-        std::cout << "<block>" << '\n';
+        std::cout << "<stmt_block>" << '\n';
         for (auto &&stmt : stmts) {
             stmt->dbgprint(indent + 1);
         }
@@ -130,10 +155,20 @@ class FuncASTNode : public ASTNode {
 };
 
 std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
-    Token returnValue;
-    if (!tokenizer.expectNext(TokenType::Number, &returnValue))
+    Token number;
+    if (!tokenizer.expectNext(TokenType::Number, &number))
         return nullptr;
-    return std::make_unique<ExprASTNode>(returnValue);
+
+    auto expr1 = std::make_unique<NumericExprASTNode>(number);
+
+    if (tokenizer.peek() == TokenType::Plus) {
+        Token op = tokenizer.next();
+        auto expr2 = parseExpr(tokenizer);
+        return std::make_unique<BinaryOpExprASTNode>(op, std::move(expr1),
+                                                     std::move(expr2));
+    } else {
+        return expr1;
+    }
 }
 
 // Parse any kind of statement
