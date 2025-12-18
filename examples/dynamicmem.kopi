@@ -1,0 +1,27 @@
+import stdlib;
+
+public int main(char[][] args) {
+    // STACK ALLOCATED ARRAY:
+    // The length of this array is known at compile time and therefore no object
+    // needs to be created to pair the pointer and its length.
+    // Works pretty much the same way as C arrays in this case.
+    int[] myNumbers = { 50, 325, 23, 53 };
+
+    int arrayLength = 64;
+    int *arrayMem = malloc(sizeof(int) * arrayLength);
+
+    // DYNAMICALLY ALLOCATED ARRAY:
+    //
+    // The array creates an "object" in memory containing a pointer to the start
+    // of the array and the length of the array (both as 64-bit values on x86_64).
+    //
+    // This syntax constructs an array "object" from a pointer to the array's
+    // memory and a length value. The pointer can be accessed by using the `&`
+    // operator and the length can be accessed using `countof`.
+    //
+    int[] array = [arrayMem, arrayLength];
+
+    // free(array); Invalid - Would give a type error on compilation
+    free(&array);
+    return 0;
+}
