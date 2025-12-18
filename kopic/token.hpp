@@ -34,11 +34,13 @@ class TokenReader {
 public:
     TokenReader(std::ifstream &inf) : infile(inf) {}
 
-    [[nodiscard]] Token next();
-
+    Token next();
     // Gets the next token, and expects it to be a certain type.
     Token expectNext(TokenType type);
 
+    // Previews the type of the next token without advancing the parser
+    TokenType peek();
+    
 private:
     std::ifstream &infile;
 };

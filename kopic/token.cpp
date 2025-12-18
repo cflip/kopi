@@ -81,3 +81,10 @@ Token TokenReader::expectNext(TokenType expectedType)
     }
     return result;
 }
+
+TokenType TokenReader::peek() {
+    std::streampos pos = infile.tellg();
+    Token t = next();
+    infile.seekg(pos);
+    return t.type;
+}
