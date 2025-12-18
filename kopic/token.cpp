@@ -2,15 +2,14 @@
 
 #include <iostream>
 
-Token TokenReader::next()
-{
+Token TokenReader::next() {
     int tokenChar;
     std::string word;
 
     tokenChar = infile.get();
 
     if (tokenChar == EOF)
-        return { TokenType::EoF, "_done_" };
+        return {TokenType::EoF, "_done_"};
 
     // Ignore whitespace characters
     while (isspace(tokenChar))
@@ -25,16 +24,16 @@ Token TokenReader::next()
 
         infile.unget();
         if (word == "public") {
-            return { TokenType::Public, word };
+            return {TokenType::Public, word};
         }
         if (word == "int") {
-            return { TokenType::Int, word };
+            return {TokenType::Int, word};
         }
         if (word == "return") {
-            return { TokenType::Return, word };
+            return {TokenType::Return, word};
         }
 
-        return { TokenType::Identifier, word };
+        return {TokenType::Identifier, word};
     }
 
     if (isdigit(tokenChar)) {
@@ -43,24 +42,29 @@ Token TokenReader::next()
             tokenChar = infile.get();
         }
         infile.unget();
-        return { TokenType::Number, word };
+        return {TokenType::Number, word};
     }
 
     switch (tokenChar) {
-    case '(': return { TokenType::OpenBracket, "(" };
-    case ')': return { TokenType::CloseBracket, ")" };
-    case '{': return { TokenType::OpenBrace, "{" };
-    case '}': return { TokenType::CloseBrace, "}" };
-    case ';': return { TokenType::Semicolon, ";" };
+    case '(':
+        return {TokenType::OpenBracket, "("};
+    case ')':
+        return {TokenType::CloseBracket, ")"};
+    case '{':
+        return {TokenType::OpenBrace, "{"};
+    case '}':
+        return {TokenType::CloseBrace, "}"};
+    case ';':
+        return {TokenType::Semicolon, ";"};
     default:
         std::cerr << "Unrecognized token" << std::endl;
-        return { TokenType::Invalid, "" };
+        return {TokenType::Invalid, ""};
     }
 }
 
-bool TokenReader::expectNext(TokenType expectedType, Token *result)
-{
+bool TokenReader::expectNext(TokenType expectedType, Token *result) {
     static const char *tokenNames[static_cast<int>(TokenType::_NumTypes)] = {
+        // clang-format off
         "end of file",
         "invalid token",
         "(",
@@ -73,15 +77,14 @@ bool TokenReader::expectNext(TokenType expectedType, Token *result)
         "return",
         "identifier",
         "number"
+        // clang-format on
     };
     Token tok = next();
     if (tok.type != expectedType) {
         std::cerr << "Expected token '"
-            << tokenNames[static_cast<int>(expectedType)]
-            << "', got '"
-            << tokenNames[static_cast<int>(tok.type)]
-            << '\''
-            << std::endl;
+                  << tokenNames[static_cast<int>(expectedType)] << "', got '"
+                  << tokenNames[static_cast<int>(tok.type)] << '\''
+                  << std::endl;
         return false;
     }
     if (result != nullptr) {
