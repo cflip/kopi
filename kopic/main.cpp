@@ -83,42 +83,65 @@ private:
 
 std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer)
 {
-    Token returnValue = tokenizer.expectNext(TokenType::Number);
+    Token returnValue;
+    if (!tokenizer.expectNext(TokenType::Number, &returnValue))
+        return nullptr;
     return std::make_unique<ExprASTNode>(returnValue);
 }
 
 // Parse any kind of statement
 std::unique_ptr<StmtASTNode> parseStmt(TokenReader &tokenizer)
 {
-    tokenizer.expectNext(TokenType::Return);
+    if (!tokenizer.expectNext(TokenType::Return))
+        return nullptr;
     auto expr = parseExpr(tokenizer);
-    tokenizer.expectNext(TokenType::Semicolon);
+    if (expr == nullptr)
+        return nullptr;
+    if (!tokenizer.expectNext(TokenType::Semicolon))
+        return nullptr;
     return std::make_unique<ReturnStmtASTNode>(expr);
 }
 
 // Specifically parse a compound statement. Function bodies cannot be any other kind of statement.
 std::unique_ptr<CompoundStmtASTNode> parseCompoundStmt(TokenReader &tokenizer)
 {
-    tokenizer.expectNext(TokenType::OpenBrace);
+    if (!tokenizer.expectNext(TokenType::OpenBrace))
+        return nullptr;
+    
     std::vector<std::unique_ptr<StmtASTNode>> stmts;
     while (tokenizer.peek() != TokenType::CloseBrace) {
-        stmts.emplace_back(std::move(parseStmt(tokenizer)));
+        auto stmt = parseStmt(tokenizer);
+        if (stmt == nullptr)
+            return nullptr;
+        stmts.emplace_back(std::move(stmt));
     }
-    tokenizer.expectNext(TokenType::CloseBrace);
+    
+    if (!tokenizer.expectNext(TokenType::CloseBrace))
+        return nullptr;
+
     return std::make_unique<CompoundStmtASTNode>(std::move(stmts));
 }
 
 std::unique_ptr<FuncASTNode> parseFunction(TokenReader &tokenizer)
 {
     // Parse function
-    tokenizer.expectNext(TokenType::Public);
-    tokenizer.expectNext(TokenType::Int);
-    Token ident = tokenizer.expectNext(TokenType::Identifier);
+    if (!tokenizer.expectNext(TokenType::Public))
+        return nullptr;
+    if (!tokenizer.expectNext(TokenType::Int))
+        return nullptr;
 
-    tokenizer.expectNext(TokenType::OpenBracket);
-    tokenizer.expectNext(TokenType::CloseBracket);
+    Token ident;
+    if (!tokenizer.expectNext(TokenType::Identifier, &ident))
+        return nullptr;
+
+    if (!tokenizer.expectNext(TokenType::OpenBracket))
+        return nullptr;
+    if (!tokenizer.expectNext(TokenType::CloseBracket))
+        return nullptr;
 
     auto stmt = parseCompoundStmt(tokenizer);
+    if (stmt == nullptr)
+        return nullptr;
 
     auto func = std::make_unique<FuncASTNode>(ident, stmt);
     return func;
@@ -143,13 +166,12 @@ int main(int argc, char *argv[])
     }
 
     TokenReader tokenizer(infile);
-    try {
-        auto ast = parse(tokenizer);
-        ast->dbgprint();
-    } catch (std::exception &e) {
-        std::cout << "ERROR: " << e.what() << std::endl;
+    auto ast = parse(tokenizer);
+    if (ast == nullptr) {
         infile.close();
         return EXIT_FAILURE;
+    } else {    
+        ast->dbgprint();
     }
 
     infile.close();

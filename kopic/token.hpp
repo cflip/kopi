@@ -5,6 +5,7 @@
 
 enum class TokenType {
     EoF,
+    Invalid,
 
     // Symbols
     OpenBracket,
@@ -34,12 +35,12 @@ class TokenReader {
 public:
     TokenReader(std::ifstream &inf) : infile(inf) {}
 
-    Token next();
+    [[nodiscard]] Token next();
     // Gets the next token, and expects it to be a certain type.
-    Token expectNext(TokenType type);
+    [[nodiscard]] bool expectNext(TokenType type, Token *result = nullptr);
 
     // Previews the type of the next token without advancing the parser
-    TokenType peek();
+    [[nodiscard]] TokenType peek();
     
 private:
     std::ifstream &infile;

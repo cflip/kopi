@@ -1,5 +1,7 @@
 #include "token.hpp"
 
+#include <iostream>
+
 Token TokenReader::next()
 {
     int tokenChar;
@@ -51,14 +53,16 @@ Token TokenReader::next()
     case '}': return { TokenType::CloseBrace, "}" };
     case ';': return { TokenType::Semicolon, ";" };
     default:
-        throw std::runtime_error("Unrecognized token");
+        std::cerr << "Unrecognized token" << std::endl;
+        return { TokenType::Invalid, "" };
     }
 }
 
-Token TokenReader::expectNext(TokenType expectedType)
+bool TokenReader::expectNext(TokenType expectedType, Token *result)
 {
     static const char *tokenNames[static_cast<int>(TokenType::_NumTypes)] = {
         "end of file",
+        "invalid token",
         "(",
         ")",
         "{",
@@ -70,16 +74,20 @@ Token TokenReader::expectNext(TokenType expectedType)
         "identifier",
         "number"
     };
-    Token result = next();
-    if (result.type != expectedType) {
-        std::string errmsg = "Expected token '";
-        errmsg.append(tokenNames[static_cast<int>(expectedType)]);
-        errmsg.append("', got '");
-        errmsg.append(tokenNames[static_cast<int>(result.type)]);
-        errmsg += '\'';
-        throw std::runtime_error(errmsg);
+    Token tok = next();
+    if (tok.type != expectedType) {
+        std::cerr << "Expected token '"
+            << tokenNames[static_cast<int>(expectedType)]
+            << "', got '"
+            << tokenNames[static_cast<int>(tok.type)]
+            << '\''
+            << std::endl;
+        return false;
     }
-    return result;
+    if (result != nullptr) {
+        *result = tok;
+    }
+    return true;
 }
 
 TokenType TokenReader::peek() {
