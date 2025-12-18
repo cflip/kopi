@@ -1,16 +1,30 @@
 #include <cassert>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <vector>
 
+#include <llvm/ADT/APInt.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Verifier.h>
+
 #include "token.hpp"
+
+static std::unique_ptr<llvm::LLVMContext> context;
+static std::unique_ptr<llvm::Module> mainModule;
+static std::unique_ptr<llvm::IRBuilder<>> builder;
 
 enum class Visibility { Private, Protected, Public };
 
 class ASTNode {
   public:
     virtual ~ASTNode() = default;
+
+    virtual llvm::Value *emit() const = 0;
 
     virtual void dbgprint(int indent = 0) const {
         for (int i = 0; i < indent; i++)
@@ -22,6 +36,11 @@ class ExprASTNode : public ASTNode {
   public:
     explicit ExprASTNode(Token number) : number(number) {}
 
+    llvm::Value *emit() const override {
+        long value = std::stoi(number.contents);
+        return llvm::ConstantInt::get(*context, llvm::APInt(32, value, true));
+    }
+
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
         std::cout << "<expr> -> " << number.contents << std::endl;
@@ -31,14 +50,16 @@ class ExprASTNode : public ASTNode {
     Token number;
 };
 
-class StmtASTNode : public ASTNode {
-  private:
-};
+class StmtASTNode : public ASTNode {};
 
 class ReturnStmtASTNode : public StmtASTNode {
   public:
     explicit ReturnStmtASTNode(std::unique_ptr<ExprASTNode> &expr)
         : expr(std::move(expr)) {}
+
+    llvm::Value *emit() const override {
+        return builder->CreateRet(expr->emit());
+    }
 
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
@@ -55,11 +76,19 @@ class CompoundStmtASTNode : public StmtASTNode {
     explicit CompoundStmtASTNode(std::vector<std::unique_ptr<StmtASTNode>> list)
         : stmts(std::move(list)) {}
 
+    llvm::Value *emit() const override {
+        for (auto &&stmt : stmts) {
+            stmt->emit();
+        }
+        return nullptr;
+    }
+
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
         std::cout << "<block>" << '\n';
-        for (const auto &stmt : stmts)
+        for (auto &&stmt : stmts) {
             stmt->dbgprint(indent + 1);
+        }
     }
 
   private:
@@ -70,6 +99,23 @@ class FuncASTNode : public ASTNode {
   public:
     FuncASTNode(Token ident, std::unique_ptr<CompoundStmtASTNode> &body)
         : vis(Visibility::Public), identifier(ident), body(std::move(body)) {}
+
+    llvm::Value *emit() const override {
+        llvm::FunctionType *funcType =
+            llvm::FunctionType::get(llvm::Type::getInt32Ty(*context), false);
+        llvm::Function *func =
+            llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
+                                   identifier.contents, *mainModule);
+
+        llvm::BasicBlock *block =
+            llvm::BasicBlock::Create(*context, "entry", func);
+        builder->SetInsertPoint(block);
+        body->emit();
+
+        llvm::verifyFunction(*func);
+
+        return func;
+    }
 
     void dbgprint(int indent) const override {
         ASTNode::dbgprint(indent);
@@ -156,7 +202,14 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::ifstream infile(argv[1]);
+    std::filesystem::path sourcePath(argv[1]);
+
+    context = std::make_unique<llvm::LLVMContext>();
+    mainModule =
+        std::make_unique<llvm::Module>(sourcePath.stem().string(), *context);
+    builder = std::make_unique<llvm::IRBuilder<>>(*context);
+
+    std::ifstream infile(sourcePath);
     if (!infile.is_open()) {
         std::cerr << "Unable to open " << argv[1] << std::endl;
         return EXIT_FAILURE;
@@ -169,9 +222,9 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     } else {
         ast->dbgprint();
+        ast->emit();
+        mainModule->print(llvm::outs(), nullptr);
     }
-
-    infile.close();
 
     return EXIT_SUCCESS;
 }

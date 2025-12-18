@@ -1,4 +1,4 @@
-CXXFLAGS += -ggdb -Wall -Wextra
+CXXFLAGS += -ggdb -Wall -Wextra -Wno-unused-parameter
 CXXFLAGS += $(shell llvm-config --cxxflags)
 LDFLAGS += $(shell llvm-config --ldflags --system-libs --libs core)
 
@@ -8,7 +8,7 @@ DEPS=token.hpp
 OUT=kopic
 
 $(OUT): $(SRCS) $(DEPS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(OUT) $(SRCS)
+	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRCS) $(LDFLAGS)
 
 .PHONY: lint
 lint:
