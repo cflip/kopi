@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <vector>
 
 #include <llvm/ADT/APInt.h>
@@ -59,7 +60,19 @@ class BinaryOpExprASTNode : public ExprASTNode {
         : op(op), left(std::move(l)), right(std::move(r)) {}
 
     llvm::Value *emit() const override {
-        return builder->CreateAdd(left->emit(), right->emit());
+        switch (op.type) {
+        case TokenType::Plus:
+            return builder->CreateAdd(left->emit(), right->emit());
+        case TokenType::Minus:
+            return builder->CreateSub(left->emit(), right->emit());
+        case TokenType::Multiply:
+            return builder->CreateMul(left->emit(), right->emit());
+        case TokenType::Divide:
+            return builder->CreateSDiv(left->emit(), right->emit());
+        default:
+            std::cerr << "Invalid binary operator in expression";
+            return nullptr;
+        }
     }
 
     void dbgprint(int indent) const override {
@@ -154,21 +167,95 @@ class FuncASTNode : public ASTNode {
     std::unique_ptr<CompoundStmtASTNode> body;
 };
 
-std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
-    Token number;
-    if (!tokenizer.expectNext(TokenType::Number, &number))
-        return nullptr;
-
-    auto expr1 = std::make_unique<NumericExprASTNode>(number);
-
-    if (tokenizer.peek() == TokenType::Plus) {
-        Token op = tokenizer.next();
-        auto expr2 = parseExpr(tokenizer);
-        return std::make_unique<BinaryOpExprASTNode>(op, std::move(expr1),
-                                                     std::move(expr2));
-    } else {
-        return expr1;
+static int precedence(TokenType type) {
+    switch (type) {
+    case TokenType::Plus:
+    case TokenType::Minus:
+        return 1;
+    case TokenType::Multiply:
+    case TokenType::Divide:
+        return 2;
+    default:
+        return 0;
     }
+}
+
+std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
+    // https://en.wikipedia.org/wiki/Shunting_yard_algorithm
+    std::stack<Token> operatorStack;
+    std::stack<ExprASTNode *> exprStack;
+
+    while (tokenizer.peek() != TokenType::Semicolon) {
+        Token token = tokenizer.next();
+        switch (token.type) {
+        case TokenType::Number:
+            exprStack.emplace(new NumericExprASTNode(token));
+            break;
+        case TokenType::Plus:
+        case TokenType::Minus:
+        case TokenType::Multiply:
+        case TokenType::Divide: {
+            Token otherToken;
+            while ((!operatorStack.empty() &&
+                    (otherToken = operatorStack.top()).type !=
+                        TokenType::OpenBracket) &&
+                   precedence(otherToken.type) >= precedence(token.type)) {
+                operatorStack.pop();
+
+                std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
+                exprStack.pop();
+                std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
+                exprStack.pop();
+                exprStack.emplace(
+                    new BinaryOpExprASTNode(otherToken, std::move(operandExpr1),
+                                            std::move(operandExpr2)));
+            }
+            operatorStack.emplace(token);
+            break;
+        }
+        case TokenType::OpenBracket:
+            operatorStack.emplace(token);
+            break;
+        case TokenType::CloseBracket:
+            while (operatorStack.top().type != TokenType::OpenBracket) {
+                assert(!operatorStack.empty());
+
+                Token operatorToken = operatorStack.top();
+                operatorStack.pop();
+
+                std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
+                exprStack.pop();
+                std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
+                exprStack.pop();
+                exprStack.emplace(new BinaryOpExprASTNode(
+                    operatorToken, std::move(operandExpr1),
+                    std::move(operandExpr2)));
+            }
+            assert(operatorStack.top().type == TokenType::OpenBracket);
+            operatorStack.pop();
+            break;
+        default:
+            std::cerr << "Unexcpected token" << std::endl;
+            return nullptr;
+        }
+    }
+
+    while (!operatorStack.empty()) {
+        assert(operatorStack.top().type != TokenType::OpenBracket);
+
+        Token operatorToken = operatorStack.top();
+        operatorStack.pop();
+
+        std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
+        exprStack.pop();
+        std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
+        exprStack.pop();
+        exprStack.emplace(new BinaryOpExprASTNode(
+            operatorToken, std::move(operandExpr1), std::move(operandExpr2)));
+    }
+
+    std::unique_ptr<ExprASTNode> result(exprStack.top());
+    return result;
 }
 
 // Parse any kind of statement

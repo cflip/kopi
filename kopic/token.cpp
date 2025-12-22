@@ -58,6 +58,12 @@ Token TokenReader::next() {
         return {TokenType::Semicolon, ";"};
     case '+':
         return {TokenType::Plus, "+"};
+    case '-':
+        return {TokenType::Minus, "-"};
+    case '*':
+        return {TokenType::Multiply, "*"};
+    case '/':
+        return {TokenType::Divide, "/"};
     default:
         std::cerr << "Unrecognized token" << std::endl;
         return {TokenType::Invalid, ""};

@@ -13,7 +13,12 @@ enum class TokenType {
     OpenBrace,
     CloseBrace,
     Semicolon,
+
+    // Operators
     Plus,
+    Minus,
+    Multiply,
+    Divide,
 
     // Keywords
     Public,
