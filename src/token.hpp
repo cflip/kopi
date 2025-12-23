@@ -42,7 +42,7 @@ class TokenReader {
   public:
     explicit TokenReader(std::istream &inf) : infile(inf) {}
 
-    [[nodiscard]] Token next();
+    Token next();
     // Gets the next token, and expects it to be a certain type.
     [[nodiscard]] bool expectNext(TokenType type, Token *result = nullptr);
 
