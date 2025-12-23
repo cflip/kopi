@@ -20,7 +20,8 @@ static std::unique_ptr<llvm::IRBuilder<>> builder;
 
 static llvm::TargetMachine *targetMachine;
 
-static std::unordered_map<std::string, llvm::AllocaInst *> variables;
+static std::unordered_map<std::string, llvm::Value *> funcParams;
+static std::unordered_map<std::string, llvm::AllocaInst *> localVariables;
 
 llvm::Value *NumericExprASTNode::emit() const {
     int64_t value = std::stoi(number.contents);
@@ -28,8 +29,16 @@ llvm::Value *NumericExprASTNode::emit() const {
 }
 
 llvm::Value *IdentifierExprASTNode::emit() const {
-    return builder->CreateLoad(llvm::Type::getInt32Ty(*context),
-                               variables[identifier.contents]);
+    if (funcParams.find(identifier.contents) != funcParams.end()) {
+        return funcParams[identifier.contents];
+    } else if (localVariables.find(identifier.contents) !=
+               localVariables.end()) {
+        return builder->CreateLoad(llvm::Type::getInt32Ty(*context),
+                                   localVariables[identifier.contents]);
+    } else {
+        std::cerr << "Unknown identifier " << identifier.contents << std::endl;
+        return nullptr;
+    }
 }
 
 llvm::Value *BinaryOpExprASTNode::emit() const {
@@ -55,7 +64,7 @@ llvm::Value *ReturnStmtASTNode::emit() const {
 llvm::Value *VariableDeclStmtASTNode::emit() const {
     auto alloc = builder->CreateAlloca(llvm::Type::getInt32Ty(*context),
                                        nullptr, identifier.contents);
-    variables[identifier.contents] = alloc;
+    localVariables[identifier.contents] = alloc;
     if (initExpr) {
         builder->CreateStore(initExpr->emit(), alloc);
     } else {
@@ -73,11 +82,20 @@ llvm::Value *CompoundStmtASTNode::emit() const {
 }
 
 llvm::Value *FuncASTNode::emit() const {
-    llvm::FunctionType *funcType =
-        llvm::FunctionType::get(llvm::Type::getInt32Ty(*context), false);
+    std::vector<llvm::Type *> arguments(params.size(),
+                                        llvm::Type::getInt32Ty(*context));
+
+    llvm::FunctionType *funcType = llvm::FunctionType::get(
+        llvm::Type::getInt32Ty(*context), arguments, false);
     llvm::Function *func =
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
                                identifier.contents, *mainModule);
+
+    unsigned index = 0;
+    for (auto &arg : func->args()) {
+        funcParams[params[index].contents] = &arg;
+        index++;
+    }
 
     llvm::BasicBlock *block = llvm::BasicBlock::Create(*context, "entry", func);
     builder->SetInsertPoint(block);

@@ -169,6 +169,23 @@ static std::unique_ptr<FuncASTNode> parseFunction(TokenReader &tokenizer) {
 
     if (!tokenizer.expectNext(TokenType::OpenBracket))
         return nullptr;
+
+    std::vector<Token> params;
+    while (tokenizer.peek() != TokenType::CloseBracket) {
+        if (!tokenizer.expectNext(TokenType::Int))
+            return nullptr;
+
+        Token paramIdent;
+        if (!tokenizer.expectNext(TokenType::Identifier, &paramIdent))
+            return nullptr;
+        params.push_back(paramIdent);
+
+        if (tokenizer.peek() != TokenType::CloseBracket) {
+            if (!tokenizer.expectNext(TokenType::Comma))
+                return nullptr;
+        }
+    }
+
     if (!tokenizer.expectNext(TokenType::CloseBracket))
         return nullptr;
 
@@ -176,7 +193,7 @@ static std::unique_ptr<FuncASTNode> parseFunction(TokenReader &tokenizer) {
     if (stmt == nullptr)
         return nullptr;
 
-    auto func = std::make_unique<FuncASTNode>(ident, stmt);
+    auto func = std::make_unique<FuncASTNode>(ident, params, stmt);
     return func;
 }
 

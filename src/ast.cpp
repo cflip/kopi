@@ -48,6 +48,10 @@ void CompoundStmtASTNode::dbgprint(int indent) const {
 
 void FuncASTNode::dbgprint(int indent) const {
     ASTNode::dbgprint(indent);
-    std::cout << "<func> " << identifier.contents << '\n';
+    std::cout << "<func> " << identifier.contents;
+    for (const auto &param : params) {
+        std::cout << ' ' << param.contents;
+    }
+    std::cout << '\n';
     body->dbgprint(indent + 1);
 }

@@ -98,8 +98,10 @@ enum class Visibility { Private, Protected, Public };
 
 class FuncASTNode : public ASTNode {
   public:
-    FuncASTNode(Token ident, std::unique_ptr<CompoundStmtASTNode> &body)
-        : vis(Visibility::Public), identifier(ident), body(std::move(body)) {}
+    FuncASTNode(Token ident, std::vector<Token> params,
+                std::unique_ptr<CompoundStmtASTNode> &body)
+        : vis(Visibility::Public), identifier(ident), params(params),
+          body(std::move(body)) {}
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -107,6 +109,7 @@ class FuncASTNode : public ASTNode {
   private:
     Visibility vis;
     Token identifier;
+    std::vector<Token> params;
     std::unique_ptr<CompoundStmtASTNode> body;
 };
 

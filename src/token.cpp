@@ -56,6 +56,8 @@ Token TokenReader::next() {
         return {TokenType::CloseBrace, "}"};
     case ';':
         return {TokenType::Semicolon, ";"};
+    case ',':
+        return {TokenType::Comma, ","};
     case '+':
         return {TokenType::Plus, "+"};
     case '-':
@@ -82,6 +84,7 @@ bool TokenReader::expectNext(TokenType expectedType, Token *result) {
         "{",
         "}",
         ";",
+        ",",
         "+",
         "-",
         "*",

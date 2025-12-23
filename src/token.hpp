@@ -12,6 +12,7 @@ enum class TokenType {
     OpenBrace,
     CloseBrace,
     Semicolon,
+    Comma,
 
     // Operators
     Plus,
