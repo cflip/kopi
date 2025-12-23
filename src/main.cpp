@@ -6,15 +6,23 @@
 #include <fstream>
 #include <iostream>
 
-llvm::cl::opt<std::string> inputName(llvm::cl::Positional,
-                                     llvm::cl::desc("<input file>"),
-                                     llvm::cl::Required);
-llvm::cl::opt<std::string> outputName("o",
-                                      llvm::cl::desc("Specify output filename"),
-                                      llvm::cl::value_desc("filename"));
+using namespace llvm;
+
+cl::OptionCategory category("kopic options");
+
+cl::opt<std::string> inputName(cl::Positional, cl::desc("<input file>"),
+                               cl::Required, cl::cat(category));
+cl::opt<std::string> outputName("o", cl::desc("Specify output filename"),
+                                cl::value_desc("filename"), cl::cat(category));
+
+cl::opt<bool> dumpAst("dump-ast", cl::desc("Print AST to stdout"),
+                      cl::cat(category));
+cl::opt<bool> dumpIr("dump-ir", cl::desc("Print LLVM IR to stdout"),
+                     cl::cat(category));
 
 int main(int argc, char *argv[]) {
-    llvm::cl::ParseCommandLineOptions(argc, argv);
+    cl::HideUnrelatedOptions(category);
+    cl::ParseCommandLineOptions(argc, argv);
 
     std::filesystem::path sourcePath(inputName.c_str());
     std::filesystem::path outputPath;
@@ -25,7 +33,7 @@ int main(int argc, char *argv[]) {
         outputPath = outputName.c_str();
     }
 
-    if (!codegenInit(sourcePath.stem().string())) {
+    if (!codegenInit(inputName)) {
         return EXIT_FAILURE;
     }
 
@@ -41,9 +49,15 @@ int main(int argc, char *argv[]) {
         infile.close();
         return EXIT_FAILURE;
     } else {
-        ast->dbgprint();
+        if (dumpAst) {
+            ast->dbgprint();
+        }
         ast->emit();
-        codegenPrintIR(outputPath);
+
+        if (dumpIr) {
+            codegenPrintIR();
+        }
+        codegenOutput(outputPath);
     }
 
     return EXIT_SUCCESS;

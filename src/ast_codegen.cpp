@@ -141,9 +141,9 @@ bool codegenInit(const std::string &moduleName) {
     return true;
 }
 
-void codegenPrintIR(const std::string &filename) {
-    mainModule->print(llvm::outs(), nullptr);
+void codegenPrintIR() { mainModule->print(llvm::outs(), nullptr); }
 
+void codegenOutput(const std::string &filename) {
     std::error_code errCode;
     llvm::raw_fd_ostream outfile(filename, errCode, llvm::sys::fs::OF_None);
 
@@ -158,6 +158,4 @@ void codegenPrintIR(const std::string &filename) {
 
     passManager.run(*mainModule);
     outfile.flush();
-
-    std::cout << "Output written to " << filename << std::endl;
 }

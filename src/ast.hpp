@@ -114,4 +114,5 @@ class FuncASTNode : public ASTNode {
 };
 
 bool codegenInit(const std::string &moduleName);
-void codegenPrintIR(const std::string &filename);
+void codegenPrintIR();
+void codegenOutput(const std::string &filename);
