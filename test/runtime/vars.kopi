@@ -1,0 +1,5 @@
+public int testVars(int param) {
+    int zero;
+    int paramSqr = param * param;
+    return zero - (param + paramSqr);
+}
