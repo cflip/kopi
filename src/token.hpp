@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fstream>
 #include <string>
 
 enum class TokenType {
@@ -39,7 +38,7 @@ struct Token {
 
 class TokenReader {
   public:
-    explicit TokenReader(std::ifstream &inf) : infile(inf) {}
+    explicit TokenReader(std::istream &inf) : infile(inf) {}
 
     [[nodiscard]] Token next();
     // Gets the next token, and expects it to be a certain type.
@@ -49,5 +48,5 @@ class TokenReader {
     [[nodiscard]] TokenType peek();
 
   private:
-    std::ifstream &infile;
+    std::istream &infile;
 };
