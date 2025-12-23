@@ -12,7 +12,9 @@ int main(int argc, char *argv[]) {
 
     std::filesystem::path sourcePath(argv[1]);
 
-    codegenInit(sourcePath.stem().string());
+    if (!codegenInit(sourcePath.stem().string())) {
+        return EXIT_FAILURE;
+    }
 
     std::ifstream infile(sourcePath);
     if (!infile.is_open()) {

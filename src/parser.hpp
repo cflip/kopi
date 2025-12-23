@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "ast.hpp"
 #include "token.hpp"
 

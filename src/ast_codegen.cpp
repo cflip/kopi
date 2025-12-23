@@ -2,14 +2,23 @@
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Target/TargetOptions.h>
+#include <llvm/TargetParser/Host.h>
 
 #include <iostream>
 
 static std::unique_ptr<llvm::LLVMContext> context;
 static std::unique_ptr<llvm::Module> mainModule;
 static std::unique_ptr<llvm::IRBuilder<>> builder;
+
+static llvm::TargetMachine *targetMachine;
 
 llvm::Value *NumericExprASTNode::emit() const {
     int64_t value = std::stoi(number.contents);
@@ -63,7 +72,52 @@ bool codegenInit(const std::string &moduleName) {
     context = std::make_unique<llvm::LLVMContext>();
     mainModule = std::make_unique<llvm::Module>(moduleName, *context);
     builder = std::make_unique<llvm::IRBuilder<>>(*context);
+
+    std::string targetTriple = llvm::sys::getDefaultTargetTriple();
+
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeAllTargets();
+    llvm::InitializeAllTargetMCs();
+    llvm::InitializeAllAsmParsers();
+    llvm::InitializeAllAsmPrinters();
+
+    std::string errorMsg;
+    const llvm::Target *target =
+        llvm::TargetRegistry::lookupTarget(targetTriple, errorMsg);
+    if (target == nullptr) {
+        std::cerr << "Unable to look up target triple " << targetTriple << ": "
+                  << errorMsg << std::endl;
+        return false;
+    }
+
+    std::string targetCpu = "generic";
+    std::string targetFeatures = "";
+    llvm::TargetOptions targetOptions;
+    targetMachine =
+        target->createTargetMachine(targetTriple, targetCpu, targetFeatures,
+                                    targetOptions, llvm::Reloc::Static);
+
+    mainModule->setDataLayout(targetMachine->createDataLayout());
+    mainModule->setTargetTriple(targetTriple);
+
     return true;
 }
 
-void codegenPrintIR() { mainModule->print(llvm::outs(), nullptr); }
+void codegenPrintIR() {
+    mainModule->print(llvm::outs(), nullptr);
+
+    std::error_code errCode;
+    llvm::raw_fd_ostream outfile("kopi.o", errCode, llvm::sys::fs::OF_None);
+
+    llvm::legacy::PassManager passManager;
+
+    if (targetMachine->addPassesToEmitFile(passManager, outfile, nullptr,
+                                           llvm::CodeGenFileType::ObjectFile)) {
+        std::cerr << "Could not add object file emit to pass manager"
+                  << std::endl;
+        return;
+    }
+
+    passManager.run(*mainModule);
+    outfile.flush();
+}
