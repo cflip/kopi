@@ -30,6 +30,10 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         case TokenType::Number:
             exprStack.emplace(new NumericExprASTNode(token));
             break;
+        case TokenType::Identifier:
+            // TODO(cflip): This could be a function call and not a variable
+            exprStack.emplace(new IdentifierExprASTNode(token));
+            break;
         case TokenType::Plus:
         case TokenType::Minus:
         case TokenType::Multiply:
@@ -99,14 +103,36 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
 
 // Parse any kind of statement
 static std::unique_ptr<StmtASTNode> parseStmt(TokenReader &tokenizer) {
-    if (!tokenizer.expectNext(TokenType::Return))
+    Token token = tokenizer.next();
+    if (token.type == TokenType::Return) {
+        auto expr = parseExpr(tokenizer);
+        if (expr == nullptr)
+            return nullptr;
+        if (!tokenizer.expectNext(TokenType::Semicolon))
+            return nullptr;
+        return std::make_unique<ReturnStmtASTNode>(expr);
+    } else if (token.type == TokenType::Int) {
+        Token ident;
+        if (!tokenizer.expectNext(TokenType::Identifier, &ident)) {
+            return nullptr;
+        }
+
+        std::unique_ptr<ExprASTNode> initExpr;
+        if (tokenizer.peek() == TokenType::Assign) {
+            tokenizer.next();
+            initExpr = parseExpr(tokenizer);
+            if (initExpr == nullptr)
+                return nullptr;
+        }
+
+        if (!tokenizer.expectNext(TokenType::Semicolon))
+            return nullptr;
+        return std::make_unique<VariableDeclStmtASTNode>(ident,
+                                                         std::move(initExpr));
+    } else {
+        std::cerr << "Unrecognized statement type" << std::endl;
         return nullptr;
-    auto expr = parseExpr(tokenizer);
-    if (expr == nullptr)
-        return nullptr;
-    if (!tokenizer.expectNext(TokenType::Semicolon))
-        return nullptr;
-    return std::make_unique<ReturnStmtASTNode>(expr);
+    }
 }
 
 // Specifically parse a compound statement. Function bodies cannot be any other

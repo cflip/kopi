@@ -20,9 +20,16 @@ static std::unique_ptr<llvm::IRBuilder<>> builder;
 
 static llvm::TargetMachine *targetMachine;
 
+static std::unordered_map<std::string, llvm::AllocaInst *> variables;
+
 llvm::Value *NumericExprASTNode::emit() const {
     int64_t value = std::stoi(number.contents);
     return llvm::ConstantInt::get(*context, llvm::APInt(32, value, true));
+}
+
+llvm::Value *IdentifierExprASTNode::emit() const {
+    return builder->CreateLoad(llvm::Type::getInt32Ty(*context),
+                               variables[identifier.contents]);
 }
 
 llvm::Value *BinaryOpExprASTNode::emit() const {
@@ -43,6 +50,19 @@ llvm::Value *BinaryOpExprASTNode::emit() const {
 
 llvm::Value *ReturnStmtASTNode::emit() const {
     return builder->CreateRet(expr->emit());
+}
+
+llvm::Value *VariableDeclStmtASTNode::emit() const {
+    auto alloc = builder->CreateAlloca(llvm::Type::getInt32Ty(*context),
+                                       nullptr, identifier.contents);
+    variables[identifier.contents] = alloc;
+    if (initExpr) {
+        builder->CreateStore(initExpr->emit(), alloc);
+    } else {
+        builder->CreateStore(
+            llvm::ConstantInt::get(*context, llvm::APInt(32, 0)), alloc);
+    }
+    return alloc;
 }
 
 llvm::Value *CompoundStmtASTNode::emit() const {

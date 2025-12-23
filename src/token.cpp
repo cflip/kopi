@@ -64,6 +64,8 @@ Token TokenReader::next() {
         return {TokenType::Multiply, "*"};
     case '/':
         return {TokenType::Divide, "/"};
+    case '=':
+        return {TokenType::Assign, "="};
     default:
         std::cerr << "Unrecognized token" << std::endl;
         return {TokenType::Invalid, ""};
@@ -71,7 +73,7 @@ Token TokenReader::next() {
 }
 
 bool TokenReader::expectNext(TokenType expectedType, Token *result) {
-    static const char *tokenNames[static_cast<int>(TokenType::_NumTypes)] = {
+    static const char *tokenNames[] = {
         // clang-format off
         "end of file",
         "invalid token",
@@ -81,6 +83,10 @@ bool TokenReader::expectNext(TokenType expectedType, Token *result) {
         "}",
         ";",
         "+",
+        "-",
+        "*",
+        "/",
+        "=",
         "public",
         "int",
         "return",
@@ -88,6 +94,9 @@ bool TokenReader::expectNext(TokenType expectedType, Token *result) {
         "number"
         // clang-format on
     };
+    static_assert(sizeof(tokenNames) / sizeof(*tokenNames) ==
+                  static_cast<size_t>(TokenType::_NumTypes));
+
     Token tok = next();
     if (tok.type != expectedType) {
         std::cerr << "Expected token '"

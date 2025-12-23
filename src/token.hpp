@@ -18,6 +18,7 @@ enum class TokenType {
     Minus,
     Multiply,
     Divide,
+    Assign,
 
     // Keywords
     Public,

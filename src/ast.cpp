@@ -12,6 +12,11 @@ void NumericExprASTNode::dbgprint(int indent) const {
     std::cout << "<expr_num> " << number.contents << std::endl;
 }
 
+void IdentifierExprASTNode::dbgprint(int indent) const {
+    ASTNode::dbgprint(indent);
+    std::cout << "<expr_ident> " << identifier.contents << std::endl;
+}
+
 void BinaryOpExprASTNode::dbgprint(int indent) const {
     ASTNode::dbgprint(indent);
     std::cout << "<expr_op> " << op.contents << '\n';
@@ -23,6 +28,14 @@ void ReturnStmtASTNode::dbgprint(int indent) const {
     ASTNode::dbgprint(indent);
     std::cout << "<stmt_ret>" << '\n';
     expr->dbgprint(indent + 1);
+}
+
+void VariableDeclStmtASTNode::dbgprint(int indent) const {
+    ASTNode::dbgprint(indent);
+    std::cout << "<stmt_vardecl> " << identifier.contents << '\n';
+    if (initExpr) {
+        initExpr->dbgprint(indent + 1);
+    }
 }
 
 void CompoundStmtASTNode::dbgprint(int indent) const {

@@ -29,6 +29,17 @@ class NumericExprASTNode : public ExprASTNode {
     Token number;
 };
 
+class IdentifierExprASTNode : public ExprASTNode {
+  public:
+    explicit IdentifierExprASTNode(Token ident) : identifier(ident) {}
+
+    llvm::Value *emit() const override;
+    void dbgprint(int indent) const override;
+
+  private:
+    Token identifier;
+};
+
 class BinaryOpExprASTNode : public ExprASTNode {
   public:
     BinaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> l,
@@ -56,6 +67,19 @@ class ReturnStmtASTNode : public StmtASTNode {
 
   private:
     std::unique_ptr<ExprASTNode> expr;
+};
+
+class VariableDeclStmtASTNode : public StmtASTNode {
+  public:
+    VariableDeclStmtASTNode(Token ident, std::unique_ptr<ExprASTNode> init)
+        : identifier(ident), initExpr(std::move(init)) {}
+
+    llvm::Value *emit() const override;
+    void dbgprint(int indent) const override;
+
+  private:
+    Token identifier;
+    std::unique_ptr<ExprASTNode> initExpr;
 };
 
 class CompoundStmtASTNode : public StmtASTNode {
