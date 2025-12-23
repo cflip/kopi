@@ -103,11 +103,11 @@ bool codegenInit(const std::string &moduleName) {
     return true;
 }
 
-void codegenPrintIR() {
+void codegenPrintIR(const std::string &filename) {
     mainModule->print(llvm::outs(), nullptr);
 
     std::error_code errCode;
-    llvm::raw_fd_ostream outfile("kopi.o", errCode, llvm::sys::fs::OF_None);
+    llvm::raw_fd_ostream outfile(filename, errCode, llvm::sys::fs::OF_None);
 
     llvm::legacy::PassManager passManager;
 
@@ -120,4 +120,6 @@ void codegenPrintIR() {
 
     passManager.run(*mainModule);
     outfile.flush();
+
+    std::cout << "Output written to " << filename << std::endl;
 }
