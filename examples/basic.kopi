@@ -1,3 +1,6 @@
+// This is a simple program that demonstrates basic features like arithmetic and
+// local variables.
+
 public int main() {
     int a = 1 + 2 * 3;
     int b = 10 * ((1 + 2) * 3);

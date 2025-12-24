@@ -50,5 +50,7 @@ class TokenReader {
     [[nodiscard]] TokenType peek();
 
   private:
+    void skipUntil(char c);
+
     std::istream &infile;
 };
