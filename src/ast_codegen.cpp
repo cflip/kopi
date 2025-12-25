@@ -88,6 +88,9 @@ llvm::Value *FuncASTNode::emit() const {
     llvm::Function *func =
         llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, identifier.contents, *mainModule);
 
+    funcParams.clear();
+    localVariables.clear();
+
     unsigned index = 0;
     for (auto &arg : func->args()) {
         funcParams[params[index].contents] = &arg;
@@ -101,6 +104,13 @@ llvm::Value *FuncASTNode::emit() const {
     llvm::verifyFunction(*func);
 
     return func;
+}
+
+llvm::Value *SourceFileASTNode::emit() const {
+    for (const auto &func : functions) {
+        func->emit();
+    }
+    return nullptr;
 }
 
 bool codegenInit(const std::string &moduleName) {

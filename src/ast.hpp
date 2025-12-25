@@ -128,6 +128,18 @@ class FuncASTNode : public ASTNode {
     std::unique_ptr<CompoundStmtASTNode> body;
 };
 
+class SourceFileASTNode : public ASTNode {
+  public:
+    explicit SourceFileASTNode(std::vector<std::unique_ptr<FuncASTNode>> funcs) : functions(std::move(funcs)) {
+    }
+
+    llvm::Value *emit() const override;
+    void dbgprint(int indent) const override;
+
+  private:
+    std::vector<std::unique_ptr<FuncASTNode>> functions;
+};
+
 bool codegenInit(const std::string &moduleName);
 void codegenPrintIR();
 void codegenOutput(const std::string &filename);

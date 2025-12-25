@@ -1,3 +1,10 @@
 public int example(int x, int y) {
 	return x * x + y * y;
 }
+
+public int basic() {
+    int a = 1 + 2 * 3;
+    int b = 10 * ((1 + 2) * 3);
+    int c = 100 * (6 / 2 * (1 + 2));
+    return a + b + c;
+}

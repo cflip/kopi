@@ -61,3 +61,11 @@ void FuncASTNode::dbgprint(int indent) const {
     std::cout << '\n';
     body->dbgprint(indent + 1);
 }
+
+void SourceFileASTNode::dbgprint(int indent) const {
+    ASTNode::dbgprint(indent);
+    std::cout << "<file>\n";
+    for (const auto &func : functions) {
+        func->dbgprint(indent + 1);
+    }
+}

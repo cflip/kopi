@@ -14,12 +14,12 @@ Token TokenReader::next() {
             tokenChar = infile.get();
         }
 
-        if (tokenChar == EOF)
-            return {TokenType::EoF, "_done_"};
-
         // Ignore whitespace characters
         while (isspace(tokenChar))
             tokenChar = infile.get();
+
+        if (tokenChar == EOF)
+            return {TokenType::EoF, "_done_"};
     } while (tokenChar == '/' && infile.peek() == '/');
 
     // Read keywords and identifiers
@@ -76,7 +76,7 @@ Token TokenReader::next() {
     case '=':
         return {TokenType::Assign, "="};
     default:
-        std::cerr << "Unrecognized token: '" << word << '\'' << std::endl;
+        std::cerr << "Unrecognized token: '" << tokenChar << "' at " << infile.tellg() << std::endl;
         return {TokenType::Invalid, ""};
     }
 }
@@ -128,7 +128,7 @@ TokenType TokenReader::peek() {
 void TokenReader::skipUntil(char c) {
     int read;
     while ((read = infile.get()) != c) {
-        if (read == EOF)
+        if (infile.peek() == EOF)
             break;
     }
 }

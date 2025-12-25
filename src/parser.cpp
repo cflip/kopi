@@ -210,5 +210,9 @@ static std::unique_ptr<FuncASTNode> parseFunction(TokenReader &tokenizer) {
 }
 
 std::unique_ptr<ASTNode> parse(TokenReader &tokenizer) {
-    return parseFunction(tokenizer);
+    std::vector<std::unique_ptr<FuncASTNode>> functions;
+    while (tokenizer.peek() != TokenType::EoF) {
+        functions.emplace_back(parseFunction(tokenizer));
+    }
+    return std::make_unique<SourceFileASTNode>(std::move(functions));
 }

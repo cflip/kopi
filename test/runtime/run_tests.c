@@ -12,10 +12,12 @@ void expectEq(const char *name, int result, int expected) {
 
 int main() {
     extern int testArithmetic(void);
+    extern int basic(void);
     extern int example(int, int);
     extern int testVars(int);
 
     expectEq("testArithmetic", testArithmetic(), 21);
+    expectEq("basic", basic(), 997);
     expectEq("example", example(2, 3), 13);
     expectEq("testVars", testVars(4), -10);
 
