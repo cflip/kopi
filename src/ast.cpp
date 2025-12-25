@@ -52,6 +52,12 @@ void VariableDeclStmtASTNode::dbgprint(int indent) const {
     }
 }
 
+void AssignmentStmtASTNode::dbgprint(int indent) const {
+    ASTNode::dbgprint(indent);
+    std::cout << "<stmt_assign> " << identifier.contents << '\n';
+    expression->dbgprint(indent + 1);
+}
+
 void CompoundStmtASTNode::dbgprint(int indent) const {
     ASTNode::dbgprint(indent);
     std::cout << "<stmt_block>" << '\n';

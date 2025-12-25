@@ -112,6 +112,20 @@ class VariableDeclStmtASTNode : public StmtASTNode {
     std::unique_ptr<ExprASTNode> initExpr;
 };
 
+class AssignmentStmtASTNode : public StmtASTNode {
+  public:
+    AssignmentStmtASTNode(Token ident, std::unique_ptr<ExprASTNode> expr)
+        : identifier(ident), expression(std::move(expr)) {
+    }
+
+    llvm::Value *emit() const override;
+    void dbgprint(int indent) const override;
+
+  private:
+    Token identifier;
+    std::unique_ptr<ExprASTNode> expression;
+};
+
 class CompoundStmtASTNode : public StmtASTNode {
   public:
     explicit CompoundStmtASTNode(std::vector<std::unique_ptr<StmtASTNode>> list) : stmts(std::move(list)) {

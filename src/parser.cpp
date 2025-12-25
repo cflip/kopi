@@ -167,6 +167,20 @@ static std::unique_ptr<StmtASTNode> parseStmt(TokenReader &tokenizer) {
         if (!tokenizer.expectNext(TokenType::Semicolon))
             return nullptr;
         return std::make_unique<VariableDeclStmtASTNode>(ident, std::move(initExpr));
+    } else if (token.type == TokenType::Identifier) {
+        std::unique_ptr<ExprASTNode> expr;
+
+        if (!tokenizer.expectNext(TokenType::Assign))
+            return nullptr;
+
+        expr = parseExpr(tokenizer);
+        if (expr == nullptr)
+            return nullptr;
+
+        if (!tokenizer.expectNext(TokenType::Semicolon))
+            return nullptr;
+
+        return std::make_unique<AssignmentStmtASTNode>(token, std::move(expr));
     } else {
         std::cerr << "Unrecognized statement type" << std::endl;
         return nullptr;

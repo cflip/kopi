@@ -6,5 +6,6 @@ public int testVars(int param) {
     // Local variable used in expression initializing another local variable
     int paramSqr = param * param + another;
 
-    return zero - (param + paramSqr);
+    another = zero - (param + paramSqr);
+    return another;
 }

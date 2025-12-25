@@ -84,6 +84,17 @@ llvm::Value *VariableDeclStmtASTNode::emit() const {
     return alloc;
 }
 
+llvm::Value *AssignmentStmtASTNode::emit() const {
+    if (funcParams.find(identifier.contents) != funcParams.end()) {
+        return builder->CreateStore(expression->emit(), funcParams[identifier.contents]);
+    } else if (localVariables.find(identifier.contents) != localVariables.end()) {
+        return builder->CreateStore(expression->emit(), localVariables[identifier.contents]);
+    } else {
+        std::cerr << "Unknown identifier " << identifier.contents << std::endl;
+        return nullptr;
+    }
+}
+
 llvm::Value *CompoundStmtASTNode::emit() const {
     for (auto &&stmt : stmts) {
         stmt->emit();
