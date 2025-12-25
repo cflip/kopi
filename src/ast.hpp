@@ -42,6 +42,20 @@ class IdentifierExprASTNode : public ExprASTNode {
     Token identifier;
 };
 
+class FuncCallExprASTNode : public ExprASTNode {
+  public:
+    FuncCallExprASTNode(Token function, std::vector<std::unique_ptr<ExprASTNode>> arguments)
+        : function(function), arguments(std::move(arguments)) {
+    }
+
+    llvm::Value *emit() const override;
+    void dbgprint(int indent) const override;
+
+  private:
+    Token function;
+    std::vector<std::unique_ptr<ExprASTNode>> arguments;
+};
+
 class UnaryOpExprASTNode : public ExprASTNode {
   public:
     UnaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> expr) : op(op), operand(std::move(expr)) {

@@ -20,6 +20,7 @@ static std::unique_ptr<llvm::IRBuilder<>> builder;
 
 static llvm::TargetMachine *targetMachine;
 
+static std::unordered_map<std::string, llvm::FunctionType *> funcTypes;
 static std::unordered_map<std::string, llvm::Value *> funcParams;
 static std::unordered_map<std::string, llvm::AllocaInst *> localVariables;
 
@@ -37,6 +38,15 @@ llvm::Value *IdentifierExprASTNode::emit() const {
         std::cerr << "Unknown identifier " << identifier.contents << std::endl;
         return nullptr;
     }
+}
+
+llvm::Value *FuncCallExprASTNode::emit() const {
+    llvm::Function *callee = mainModule->getFunction(function.contents);
+    std::vector<llvm::Value *> argValues;
+    for (const auto &arg : arguments) {
+        argValues.push_back(arg->emit());
+    }
+    return builder->CreateCall(callee, argValues);
 }
 
 llvm::Value *UnaryOpExprASTNode::emit() const {

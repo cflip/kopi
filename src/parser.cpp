@@ -25,6 +25,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
     std::stack<Token> unaryOpStack;
     std::stack<Token> binaryOpStack;
     bool expectingOperand = true;
+    int bracketDepth = 0;
 
     auto placeUnaryOp = [&exprStack, &unaryOpStack]() {
         Token unaryOpToken = unaryOpStack.top();
@@ -47,7 +48,8 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         exprStack.emplace(new BinaryOpExprASTNode(operatorToken, std::move(operandExpr1), std::move(operandExpr2)));
     };
 
-    while (tokenizer.peek() != TokenType::Semicolon) {
+    while (tokenizer.peek() != TokenType::Semicolon && tokenizer.peek() != TokenType::Comma
+           && !(bracketDepth == 0 && tokenizer.peek() == TokenType::CloseBracket)) {
         Token token = tokenizer.next();
         switch (token.type) {
         case TokenType::Number:
@@ -58,8 +60,28 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
             expectingOperand = false;
             break;
         case TokenType::Identifier:
-            // TODO(cflip): This could be a function call and not a variable
-            exprStack.emplace(new IdentifierExprASTNode(token));
+            if (tokenizer.peek() == TokenType::OpenBracket) {
+                std::vector<std::unique_ptr<ExprASTNode>> args;
+                tokenizer.next();
+                do {
+                    if (tokenizer.peek() == TokenType::CloseBracket) {
+                        break;
+                    }
+                    auto expr = parseExpr(tokenizer);
+                    args.emplace_back(std::move(expr));
+
+                    if (tokenizer.peek() == TokenType::CloseBracket) {
+                        break;
+                    }
+                    if (!tokenizer.expectNext(TokenType::Comma))
+                        return nullptr;
+                } while (1);
+                if (!tokenizer.expectNext(TokenType::CloseBracket))
+                    return nullptr;
+                exprStack.emplace(new FuncCallExprASTNode(token, std::move(args)));
+            } else {
+                exprStack.emplace(new IdentifierExprASTNode(token));
+            }
             if (!unaryOpStack.empty() && unaryOpStack.top().type != TokenType::OpenBracket) {
                 placeUnaryOp();
             }
@@ -86,6 +108,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
                 unaryOpStack.emplace(token);
             }
             binaryOpStack.emplace(token);
+            bracketDepth++;
             break;
         case TokenType::CloseBracket:
             while (binaryOpStack.top().type != TokenType::OpenBracket) {
@@ -99,6 +122,8 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
                 unaryOpStack.pop();
                 placeUnaryOp();
             }
+
+            bracketDepth--;
             break;
         default:
             std::cerr << "Unexcpected token" << std::endl;

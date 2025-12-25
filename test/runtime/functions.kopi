@@ -1,0 +1,17 @@
+// A simple function with stack allocated variables and no parameters
+public int noParams() {
+    int a = 1 + 2 * 3;
+    int b = 10 * ((1 + 2) * 3);
+    int c = 100 * (6 / 2 * (1 + 2));
+    return a + b + c;
+}
+
+// Demonstrates function parameters being passed
+public int withParams(int x, int y) {
+	return x * x + y * y;
+}
+
+// Demonstrates other functions being called
+public int callAnother(int x) {
+    return noParams() - withParams(x, 4);
+}

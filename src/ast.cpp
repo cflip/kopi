@@ -17,6 +17,14 @@ void IdentifierExprASTNode::dbgprint(int indent) const {
     std::cout << "<expr_ident> " << identifier.contents << std::endl;
 }
 
+void FuncCallExprASTNode::dbgprint(int indent) const {
+    ASTNode::dbgprint(indent);
+    std::cout << "<expr_call> " << function.contents << std::endl;
+    for (const auto &arg : arguments) {
+        arg->dbgprint(indent + 1);
+    }
+}
+
 void UnaryOpExprASTNode::dbgprint(int indent) const {
     ASTNode::dbgprint(indent);
     std::cout << "<expr_unop> " << op.contents << '\n';

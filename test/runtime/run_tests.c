@@ -12,13 +12,15 @@ void expectEq(const char *name, int result, int expected) {
 
 int main() {
     extern int testArithmetic(void);
-    extern int basic(void);
-    extern int example(int, int);
+    extern int noParams(void);
+    extern int withParams(int, int);
+    extern int callAnother(int);
     extern int testVars(int);
 
     expectEq("testArithmetic", testArithmetic(), 21);
-    expectEq("basic", basic(), 997);
-    expectEq("example", example(2, 3), 13);
+    expectEq("noParams", noParams(), 997);
+    expectEq("withParams", withParams(2, 3), 13);
+    expectEq("callAnother", callAnother(6), 945);
     expectEq("testVars", testVars(4), -10);
 
     return 0;
