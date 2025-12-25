@@ -40,6 +40,19 @@ class IdentifierExprASTNode : public ExprASTNode {
     Token identifier;
 };
 
+class UnaryOpExprASTNode : public ExprASTNode {
+  public:
+    UnaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> expr)
+        : op(op), operand(std::move(expr)) {}
+
+    llvm::Value *emit() const override;
+    void dbgprint(int indent) const override;
+
+  private:
+    Token op;
+    std::unique_ptr<ExprASTNode> operand;
+};
+
 class BinaryOpExprASTNode : public ExprASTNode {
   public:
     BinaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> l,

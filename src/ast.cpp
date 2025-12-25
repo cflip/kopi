@@ -17,9 +17,15 @@ void IdentifierExprASTNode::dbgprint(int indent) const {
     std::cout << "<expr_ident> " << identifier.contents << std::endl;
 }
 
+void UnaryOpExprASTNode::dbgprint(int indent) const {
+    ASTNode::dbgprint(indent);
+    std::cout << "<expr_unop> " << op.contents << '\n';
+    operand->dbgprint(indent + 1);
+}
+
 void BinaryOpExprASTNode::dbgprint(int indent) const {
     ASTNode::dbgprint(indent);
-    std::cout << "<expr_op> " << op.contents << '\n';
+    std::cout << "<expr_binop> " << op.contents << '\n';
     left->dbgprint(indent + 1);
     right->dbgprint(indent + 1);
 }

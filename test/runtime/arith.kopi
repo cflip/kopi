@@ -1,0 +1,4 @@
+// Test parsing and evaluation of a complex mathematical expression
+public int testArithmetic() {
+    return -(3 - -(20 / 3)) + 10 * 3;
+}

@@ -1,5 +1,10 @@
+// Stack-allocated variables test
 public int testVars(int param) {
-    int zero;
-    int paramSqr = param * param;
+    int zero; // Variables with no expression are initialized to zero
+    int another = -10;
+
+    // Local variable used in expression initializing another local variable
+    int paramSqr = param * param + another;
+
     return zero - (param + paramSqr);
 }

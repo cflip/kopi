@@ -41,6 +41,10 @@ llvm::Value *IdentifierExprASTNode::emit() const {
     }
 }
 
+llvm::Value *UnaryOpExprASTNode::emit() const {
+    return builder->CreateNeg(operand->emit());
+}
+
 llvm::Value *BinaryOpExprASTNode::emit() const {
     switch (op.type) {
     case TokenType::Plus:

@@ -21,51 +21,84 @@ static int precedence(TokenType type) {
 
 static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
     // https://en.wikipedia.org/wiki/Shunting_yard_algorithm
-    std::stack<Token> operatorStack;
     std::stack<ExprASTNode *> exprStack;
+    std::stack<Token> unaryOpStack;
+    std::stack<Token> binaryOpStack;
+    bool expectingOperand = true;
 
     while (tokenizer.peek() != TokenType::Semicolon) {
         Token token = tokenizer.next();
         switch (token.type) {
         case TokenType::Number:
             exprStack.emplace(new NumericExprASTNode(token));
+            if (!unaryOpStack.empty() &&
+                unaryOpStack.top().type != TokenType::OpenBracket) {
+                    Token unaryOpToken = unaryOpStack.top();
+                unaryOpStack.pop();
+                std::unique_ptr<ExprASTNode> operand(exprStack.top());
+                exprStack.pop();
+                exprStack.emplace(
+                    new UnaryOpExprASTNode(unaryOpToken, std::move(operand)));
+            }
+            expectingOperand = false;
             break;
         case TokenType::Identifier:
             // TODO(cflip): This could be a function call and not a variable
             exprStack.emplace(new IdentifierExprASTNode(token));
+            if (!unaryOpStack.empty() &&
+                unaryOpStack.top().type != TokenType::OpenBracket) {
+                    Token unaryOpToken = unaryOpStack.top();
+                unaryOpStack.pop();
+                std::unique_ptr<ExprASTNode> operand(exprStack.top());
+                exprStack.pop();
+                exprStack.emplace(
+                    new UnaryOpExprASTNode(unaryOpToken, std::move(operand)));
+            }
+            expectingOperand = false;
             break;
         case TokenType::Plus:
         case TokenType::Minus:
         case TokenType::Multiply:
         case TokenType::Divide: {
             Token otherToken;
-            while ((!operatorStack.empty() &&
-                    (otherToken = operatorStack.top()).type !=
-                        TokenType::OpenBracket) &&
-                   precedence(otherToken.type) >= precedence(token.type)) {
-                operatorStack.pop();
 
-                std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
-                exprStack.pop();
-                std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
-                exprStack.pop();
-                exprStack.emplace(
-                    new BinaryOpExprASTNode(otherToken, std::move(operandExpr1),
-                                            std::move(operandExpr2)));
+            if (expectingOperand) {
+                unaryOpStack.push(token);
+            } else {
+                while ((!binaryOpStack.empty() &&
+                        (otherToken = binaryOpStack.top()).type !=
+                            TokenType::OpenBracket) &&
+                       precedence(otherToken.type) >= precedence(token.type)) {
+                    binaryOpStack.pop();
+
+                    // PLACE EXPRESSION
+                    std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
+                    exprStack.pop();
+                    std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
+                    exprStack.pop();
+                    exprStack.emplace(new BinaryOpExprASTNode(
+                        otherToken, std::move(operandExpr1),
+                        std::move(operandExpr2)));
+                }
+                binaryOpStack.emplace(token);
+                expectingOperand = true;
             }
-            operatorStack.emplace(token);
             break;
         }
         case TokenType::OpenBracket:
-            operatorStack.emplace(token);
+            if (!unaryOpStack.empty()) {
+                unaryOpStack.emplace(token);
+            }
+            binaryOpStack.emplace(token);
             break;
         case TokenType::CloseBracket:
-            while (operatorStack.top().type != TokenType::OpenBracket) {
-                assert(!operatorStack.empty());
+            while (binaryOpStack.top().type != TokenType::OpenBracket) {
+                assert(!binaryOpStack.empty());
 
-                Token operatorToken = operatorStack.top();
-                operatorStack.pop();
+                Token operatorToken = binaryOpStack.top();
+                binaryOpStack.pop();
 
+                // PLACE EXPRESSION
                 std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
                 exprStack.pop();
                 std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
@@ -74,8 +107,20 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
                     operatorToken, std::move(operandExpr1),
                     std::move(operandExpr2)));
             }
-            assert(operatorStack.top().type == TokenType::OpenBracket);
-            operatorStack.pop();
+            assert(binaryOpStack.top().type == TokenType::OpenBracket);
+            binaryOpStack.pop();
+
+            if (!unaryOpStack.empty() &&
+                unaryOpStack.top().type == TokenType::OpenBracket) {
+                assert(!exprStack.empty());
+                unaryOpStack.pop();
+                Token op = unaryOpStack.top();
+                unaryOpStack.pop();
+                std::unique_ptr<ExprASTNode> operand(exprStack.top());
+                exprStack.pop();
+                exprStack.emplace(
+                    new UnaryOpExprASTNode(op, std::move(operand)));
+            }
             break;
         default:
             std::cerr << "Unexcpected token" << std::endl;
@@ -83,12 +128,13 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         }
     }
 
-    while (!operatorStack.empty()) {
-        assert(operatorStack.top().type != TokenType::OpenBracket);
+    while (!binaryOpStack.empty()) {
+        assert(binaryOpStack.top().type != TokenType::OpenBracket);
 
-        Token operatorToken = operatorStack.top();
-        operatorStack.pop();
+        Token operatorToken = binaryOpStack.top();
+        binaryOpStack.pop();
 
+        // PLACE EXPRESSION
         std::unique_ptr<ExprASTNode> operandExpr2(exprStack.top());
         exprStack.pop();
         std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());

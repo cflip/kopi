@@ -1,6 +1,6 @@
 KOPIC=../../kopic
 
-OBJS=run_tests.o example.o vars.o
+OBJS=run_tests.o arith.o example.o vars.o
 OUT=run_tests
 
 $(OUT): $(OBJS)
