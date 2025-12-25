@@ -20,7 +20,8 @@ class ExprASTNode : public ASTNode {};
 
 class NumericExprASTNode : public ExprASTNode {
   public:
-    explicit NumericExprASTNode(Token number) : number(number) {}
+    explicit NumericExprASTNode(Token number) : number(number) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -31,7 +32,8 @@ class NumericExprASTNode : public ExprASTNode {
 
 class IdentifierExprASTNode : public ExprASTNode {
   public:
-    explicit IdentifierExprASTNode(Token ident) : identifier(ident) {}
+    explicit IdentifierExprASTNode(Token ident) : identifier(ident) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -42,8 +44,8 @@ class IdentifierExprASTNode : public ExprASTNode {
 
 class UnaryOpExprASTNode : public ExprASTNode {
   public:
-    UnaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> expr)
-        : op(op), operand(std::move(expr)) {}
+    UnaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> expr) : op(op), operand(std::move(expr)) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -55,9 +57,9 @@ class UnaryOpExprASTNode : public ExprASTNode {
 
 class BinaryOpExprASTNode : public ExprASTNode {
   public:
-    BinaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> l,
-                        std::unique_ptr<ExprASTNode> r)
-        : op(op), left(std::move(l)), right(std::move(r)) {}
+    BinaryOpExprASTNode(Token op, std::unique_ptr<ExprASTNode> l, std::unique_ptr<ExprASTNode> r)
+        : op(op), left(std::move(l)), right(std::move(r)) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -72,8 +74,8 @@ class StmtASTNode : public ASTNode {};
 
 class ReturnStmtASTNode : public StmtASTNode {
   public:
-    explicit ReturnStmtASTNode(std::unique_ptr<ExprASTNode> &expr)
-        : expr(std::move(expr)) {}
+    explicit ReturnStmtASTNode(std::unique_ptr<ExprASTNode> &expr) : expr(std::move(expr)) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -85,7 +87,8 @@ class ReturnStmtASTNode : public StmtASTNode {
 class VariableDeclStmtASTNode : public StmtASTNode {
   public:
     VariableDeclStmtASTNode(Token ident, std::unique_ptr<ExprASTNode> init)
-        : identifier(ident), initExpr(std::move(init)) {}
+        : identifier(ident), initExpr(std::move(init)) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -97,8 +100,8 @@ class VariableDeclStmtASTNode : public StmtASTNode {
 
 class CompoundStmtASTNode : public StmtASTNode {
   public:
-    explicit CompoundStmtASTNode(std::vector<std::unique_ptr<StmtASTNode>> list)
-        : stmts(std::move(list)) {}
+    explicit CompoundStmtASTNode(std::vector<std::unique_ptr<StmtASTNode>> list) : stmts(std::move(list)) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;
@@ -111,10 +114,9 @@ enum class Visibility { Private, Protected, Public };
 
 class FuncASTNode : public ASTNode {
   public:
-    FuncASTNode(Token ident, std::vector<Token> params,
-                std::unique_ptr<CompoundStmtASTNode> &body)
-        : vis(Visibility::Public), identifier(ident), params(params),
-          body(std::move(body)) {}
+    FuncASTNode(Token ident, std::vector<Token> params, std::unique_ptr<CompoundStmtASTNode> &body)
+        : vis(Visibility::Public), identifier(ident), params(params), body(std::move(body)) {
+    }
 
     llvm::Value *emit() const override;
     void dbgprint(int indent) const override;

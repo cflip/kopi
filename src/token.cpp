@@ -104,15 +104,12 @@ bool TokenReader::expectNext(TokenType expectedType, Token *result) {
         "number"
         // clang-format on
     };
-    static_assert(sizeof(tokenNames) / sizeof(*tokenNames) ==
-                  static_cast<size_t>(TokenType::_NumTypes));
+    static_assert(sizeof(tokenNames) / sizeof(*tokenNames) == static_cast<size_t>(TokenType::_NumTypes));
 
     Token tok = next();
     if (tok.type != expectedType) {
-        std::cerr << "Expected token '"
-                  << tokenNames[static_cast<int>(expectedType)] << "', got '"
-                  << tokenNames[static_cast<int>(tok.type)] << '\''
-                  << std::endl;
+        std::cerr << "Expected token '" << tokenNames[static_cast<int>(expectedType)] << "', got '"
+                  << tokenNames[static_cast<int>(tok.type)] << '\'' << std::endl;
         return false;
     }
     if (result != nullptr) {

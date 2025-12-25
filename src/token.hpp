@@ -40,7 +40,8 @@ struct Token {
 
 class TokenReader {
   public:
-    explicit TokenReader(std::istream &inf) : infile(inf) {}
+    explicit TokenReader(std::istream &inf) : infile(inf) {
+    }
 
     Token next();
     // Gets the next token, and expects it to be a certain type.

@@ -31,10 +31,8 @@ llvm::Value *NumericExprASTNode::emit() const {
 llvm::Value *IdentifierExprASTNode::emit() const {
     if (funcParams.find(identifier.contents) != funcParams.end()) {
         return funcParams[identifier.contents];
-    } else if (localVariables.find(identifier.contents) !=
-               localVariables.end()) {
-        return builder->CreateLoad(llvm::Type::getInt32Ty(*context),
-                                   localVariables[identifier.contents]);
+    } else if (localVariables.find(identifier.contents) != localVariables.end()) {
+        return builder->CreateLoad(llvm::Type::getInt32Ty(*context), localVariables[identifier.contents]);
     } else {
         std::cerr << "Unknown identifier " << identifier.contents << std::endl;
         return nullptr;
@@ -66,14 +64,12 @@ llvm::Value *ReturnStmtASTNode::emit() const {
 }
 
 llvm::Value *VariableDeclStmtASTNode::emit() const {
-    auto alloc = builder->CreateAlloca(llvm::Type::getInt32Ty(*context),
-                                       nullptr, identifier.contents);
+    auto alloc = builder->CreateAlloca(llvm::Type::getInt32Ty(*context), nullptr, identifier.contents);
     localVariables[identifier.contents] = alloc;
     if (initExpr) {
         builder->CreateStore(initExpr->emit(), alloc);
     } else {
-        builder->CreateStore(
-            llvm::ConstantInt::get(*context, llvm::APInt(32, 0)), alloc);
+        builder->CreateStore(llvm::ConstantInt::get(*context, llvm::APInt(32, 0)), alloc);
     }
     return alloc;
 }
@@ -86,14 +82,11 @@ llvm::Value *CompoundStmtASTNode::emit() const {
 }
 
 llvm::Value *FuncASTNode::emit() const {
-    std::vector<llvm::Type *> arguments(params.size(),
-                                        llvm::Type::getInt32Ty(*context));
+    std::vector<llvm::Type *> arguments(params.size(), llvm::Type::getInt32Ty(*context));
 
-    llvm::FunctionType *funcType = llvm::FunctionType::get(
-        llvm::Type::getInt32Ty(*context), arguments, false);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getInt32Ty(*context), arguments, false);
     llvm::Function *func =
-        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage,
-                               identifier.contents, *mainModule);
+        llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, identifier.contents, *mainModule);
 
     unsigned index = 0;
     for (auto &arg : func->args()) {
@@ -124,11 +117,9 @@ bool codegenInit(const std::string &moduleName) {
     llvm::InitializeAllAsmPrinters();
 
     std::string errorMsg;
-    const llvm::Target *target =
-        llvm::TargetRegistry::lookupTarget(targetTriple, errorMsg);
+    const llvm::Target *target = llvm::TargetRegistry::lookupTarget(targetTriple, errorMsg);
     if (target == nullptr) {
-        std::cerr << "Unable to look up target triple " << targetTriple << ": "
-                  << errorMsg << std::endl;
+        std::cerr << "Unable to look up target triple " << targetTriple << ": " << errorMsg << std::endl;
         return false;
     }
 
@@ -136,8 +127,7 @@ bool codegenInit(const std::string &moduleName) {
     std::string targetFeatures = "";
     llvm::TargetOptions targetOptions;
     targetMachine =
-        target->createTargetMachine(targetTriple, targetCpu, targetFeatures,
-                                    targetOptions, llvm::Reloc::Static);
+        target->createTargetMachine(targetTriple, targetCpu, targetFeatures, targetOptions, llvm::Reloc::Static);
 
     mainModule->setDataLayout(targetMachine->createDataLayout());
     mainModule->setTargetTriple(targetTriple);
@@ -145,7 +135,9 @@ bool codegenInit(const std::string &moduleName) {
     return true;
 }
 
-void codegenPrintIR() { mainModule->print(llvm::outs(), nullptr); }
+void codegenPrintIR() {
+    mainModule->print(llvm::outs(), nullptr);
+}
 
 void codegenOutput(const std::string &filename) {
     std::error_code errCode;
@@ -153,10 +145,8 @@ void codegenOutput(const std::string &filename) {
 
     llvm::legacy::PassManager passManager;
 
-    if (targetMachine->addPassesToEmitFile(passManager, outfile, nullptr,
-                                           llvm::CodeGenFileType::ObjectFile)) {
-        std::cerr << "Could not add object file emit to pass manager"
-                  << std::endl;
+    if (targetMachine->addPassesToEmitFile(passManager, outfile, nullptr, llvm::CodeGenFileType::ObjectFile)) {
+        std::cerr << "Could not add object file emit to pass manager" << std::endl;
         return;
     }
 

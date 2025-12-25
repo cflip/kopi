@@ -10,15 +10,12 @@ using namespace llvm;
 
 cl::OptionCategory category("kopic options");
 
-cl::opt<std::string> inputName(cl::Positional, cl::desc("<input file>"),
-                               cl::Required, cl::cat(category));
-cl::opt<std::string> outputName("o", cl::desc("Specify output filename"),
-                                cl::value_desc("filename"), cl::cat(category));
+cl::opt<std::string> inputName(cl::Positional, cl::desc("<input file>"), cl::Required, cl::cat(category));
+cl::opt<std::string> outputName("o", cl::desc("Specify output filename"), cl::value_desc("filename"),
+                                cl::cat(category));
 
-cl::opt<bool> dumpAst("dump-ast", cl::desc("Print AST to stdout"),
-                      cl::cat(category));
-cl::opt<bool> dumpIr("dump-ir", cl::desc("Print LLVM IR to stdout"),
-                     cl::cat(category));
+cl::opt<bool> dumpAst("dump-ast", cl::desc("Print AST to stdout"), cl::cat(category));
+cl::opt<bool> dumpIr("dump-ir", cl::desc("Print LLVM IR to stdout"), cl::cat(category));
 
 int main(int argc, char *argv[]) {
     cl::HideUnrelatedOptions(category);

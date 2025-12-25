@@ -31,8 +31,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         unaryOpStack.pop();
         std::unique_ptr<ExprASTNode> operand(exprStack.top());
         exprStack.pop();
-        exprStack.emplace(
-            new UnaryOpExprASTNode(unaryOpToken, std::move(operand)));
+        exprStack.emplace(new UnaryOpExprASTNode(unaryOpToken, std::move(operand)));
     };
 
     auto placeBinaryOp = [&exprStack, &binaryOpStack]() {
@@ -45,8 +44,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         exprStack.pop();
         std::unique_ptr<ExprASTNode> operandExpr1(exprStack.top());
         exprStack.pop();
-        exprStack.emplace(new BinaryOpExprASTNode(
-            operatorToken, std::move(operandExpr1), std::move(operandExpr2)));
+        exprStack.emplace(new BinaryOpExprASTNode(operatorToken, std::move(operandExpr1), std::move(operandExpr2)));
     };
 
     while (tokenizer.peek() != TokenType::Semicolon) {
@@ -54,8 +52,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         switch (token.type) {
         case TokenType::Number:
             exprStack.emplace(new NumericExprASTNode(token));
-            if (!unaryOpStack.empty() &&
-                unaryOpStack.top().type != TokenType::OpenBracket) {
+            if (!unaryOpStack.empty() && unaryOpStack.top().type != TokenType::OpenBracket) {
                 placeUnaryOp();
             }
             expectingOperand = false;
@@ -63,8 +60,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
         case TokenType::Identifier:
             // TODO(cflip): This could be a function call and not a variable
             exprStack.emplace(new IdentifierExprASTNode(token));
-            if (!unaryOpStack.empty() &&
-                unaryOpStack.top().type != TokenType::OpenBracket) {
+            if (!unaryOpStack.empty() && unaryOpStack.top().type != TokenType::OpenBracket) {
                 placeUnaryOp();
             }
             expectingOperand = false;
@@ -77,10 +73,8 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
                 unaryOpStack.push(token);
             } else {
                 Token otherToken;
-                while ((!binaryOpStack.empty() &&
-                        (otherToken = binaryOpStack.top()).type !=
-                            TokenType::OpenBracket) &&
-                       precedence(otherToken.type) >= precedence(token.type)) {
+                while ((!binaryOpStack.empty() && (otherToken = binaryOpStack.top()).type != TokenType::OpenBracket)
+                       && precedence(otherToken.type) >= precedence(token.type)) {
                     placeBinaryOp();
                 }
                 binaryOpStack.emplace(token);
@@ -100,8 +94,7 @@ static std::unique_ptr<ExprASTNode> parseExpr(TokenReader &tokenizer) {
             assert(binaryOpStack.top().type == TokenType::OpenBracket);
             binaryOpStack.pop();
 
-            if (!unaryOpStack.empty() &&
-                unaryOpStack.top().type == TokenType::OpenBracket) {
+            if (!unaryOpStack.empty() && unaryOpStack.top().type == TokenType::OpenBracket) {
                 assert(!exprStack.empty());
                 unaryOpStack.pop();
                 placeUnaryOp();
@@ -148,8 +141,7 @@ static std::unique_ptr<StmtASTNode> parseStmt(TokenReader &tokenizer) {
 
         if (!tokenizer.expectNext(TokenType::Semicolon))
             return nullptr;
-        return std::make_unique<VariableDeclStmtASTNode>(ident,
-                                                         std::move(initExpr));
+        return std::make_unique<VariableDeclStmtASTNode>(ident, std::move(initExpr));
     } else {
         std::cerr << "Unrecognized statement type" << std::endl;
         return nullptr;
@@ -158,8 +150,7 @@ static std::unique_ptr<StmtASTNode> parseStmt(TokenReader &tokenizer) {
 
 // Specifically parse a compound statement. Function bodies cannot be any other
 // kind of statement.
-static std::unique_ptr<CompoundStmtASTNode>
-parseCompoundStmt(TokenReader &tokenizer) {
+static std::unique_ptr<CompoundStmtASTNode> parseCompoundStmt(TokenReader &tokenizer) {
     if (!tokenizer.expectNext(TokenType::OpenBrace))
         return nullptr;
 
